@@ -1,0 +1,122 @@
+local Players = game:GetService("Players")
+local TeleportService = game:GetService("TeleportService")
+local HttpService = game:GetService("HttpService")
+local VirtualInput = game:GetService("VirtualInputManager")
+
+local LocalPlayer = Players.LocalPlayer
+local UI = Instance.new("ScreenGui")
+
+UI.Parent = game.CoreGui
+UI.Name = "VoidyHub"
+
+local MainFrame = Instance.new("Frame", UI)
+MainFrame.Size = UDim2.new(0, 300, 0, 200)
+MainFrame.Position = UDim2.new(0.5, -150, 0.5, -100)
+MainFrame.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
+MainFrame.Active = true
+MainFrame.Draggable = true
+MainFrame.Visible = true
+
+local HideButton = Instance.new("TextButton", MainFrame)
+HideButton.Size = UDim2.new(0, 60, 0, 30)
+HideButton.Position = UDim2.new(1, -65, 0, 5)
+HideButton.Text = "Hide"
+HideButton.BackgroundColor3 = Color3.fromRGB(255, 0, 0)
+
+local ShowButton = Instance.new("TextButton", UI)
+ShowButton.Size = UDim2.new(0, 60, 0, 30)
+ShowButton.Position = UDim2.new(0.5, -30, 0, 5)
+ShowButton.Text = "Show"
+ShowButton.BackgroundColor3 = Color3.fromRGB(0, 255, 0)
+ShowButton.Visible = false
+
+local MiniFrame = Instance.new("Frame", UI)
+MiniFrame.Size = UDim2.new(0, 120, 0, 40)
+MiniFrame.Position = UDim2.new(0.5, -60, 0, 0)
+MiniFrame.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
+MiniFrame.Visible = true
+
+local NextPlayerBtn = Instance.new("TextButton", MiniFrame)
+NextPlayerBtn.Size = UDim2.new(0, 55, 0, 30)
+NextPlayerBtn.Position = UDim2.new(0, 5, 0, 5)
+NextPlayerBtn.Text = "Next"
+NextPlayerBtn.BackgroundColor3 = Color3.fromRGB(255, 255, 0)
+
+local NextServerBtn = Instance.new("TextButton", MiniFrame)
+NextServerBtn.Size = UDim2.new(0, 55, 0, 30)
+NextServerBtn.Position = UDim2.new(1, -60, 0, 5)
+NextServerBtn.Text = "Server"
+NextServerBtn.BackgroundColor3 = Color3.fromRGB(0, 255, 255)
+
+-- // Functions
+HideButton.MouseButton1Click:Connect(function()
+    MainFrame.Visible = false
+    ShowButton.Visible = true
+end)
+
+ShowButton.MouseButton1Click:Connect(function()
+    MainFrame.Visible = true
+    ShowButton.Visible = false
+end)
+
+function GetNextTarget()
+    for _, player in ipairs(Players:GetPlayers()) do
+        if player ~= LocalPlayer and player.Character and player.Character:FindFirstChild("HumanoidRootPart") then
+            return player
+        end
+    end
+    return nil
+end
+
+function TeleportToTarget(target)
+    if LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart") then
+        LocalPlayer.Character.HumanoidRootPart.CFrame = target.Character.HumanoidRootPart.CFrame * CFrame.new(0, 2, 0)
+    end
+end
+
+function AttackTarget(target)
+    if target and target.Character and target.Character:FindFirstChild("Humanoid") then
+        VirtualInput:SendKeyEvent(true, "Z", false, game)
+        wait(0.6)
+        VirtualInput:SendKeyEvent(true, "X", false, game)
+        wait(0.6)
+        VirtualInput:SendKeyEvent(true, "C", false, game)
+    end
+end
+
+NextPlayerBtn.MouseButton1Click:Connect(function()
+    local target = GetNextTarget()
+    if target then
+        TeleportToTarget(target)
+        AttackTarget(target)
+    end
+end)
+
+NextServerBtn.MouseButton1Click:Connect(function()
+    local servers = HttpService:JSONDecode(game:HttpGet("https://games.roblox.com/v1/games/2753915549/servers/Public?sortOrder=Asc&limit=100"))
+    for _, server in pairs(servers.data) do
+        if server.playing < server.maxPlayers then
+            TeleportService:TeleportToPlaceInstance(game.PlaceId, server.id, LocalPlayer)
+            break
+        end
+    end
+end)
+
+function AutoBounty()
+    while wait(2) do
+        local target = GetNextTarget()
+        if target then
+            TeleportToTarget(target)
+            AttackTarget(target)
+        end
+    end
+end
+
+function AutoGacha()
+    while wait(10) do
+        game:GetService("ReplicatedStorage").Remotes:FindFirstChild("Gacha"):InvokeServer()
+    end
+end
+
+spawn(AutoBounty)
+spawn(AutoGacha)
